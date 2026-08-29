@@ -1,0 +1,2 @@
+-- CreatorFix — Phase 0: RLS policies, helper functions, wallet ledger function
+-- Run after 0001_schema.sql

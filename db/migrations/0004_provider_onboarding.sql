@@ -1,0 +1,2 @@
+-- CreatorFix — Provider Onboarding (role change is never client-writable)
+-- Run after 0003_identity_verification.sql

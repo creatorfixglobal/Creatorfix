@@ -1,0 +1,2 @@
+-- CreatorFix — Identity Verification (NID + live face capture)
+-- Run after 0002_rls_and_functions.sql

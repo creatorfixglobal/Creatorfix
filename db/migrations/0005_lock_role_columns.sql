@@ -1,0 +1,1 @@
+-- CreatorFix — Column-level lockdown on profiles.role / profiles.status
