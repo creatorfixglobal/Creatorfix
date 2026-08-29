@@ -18,11 +18,27 @@ export function createServerSupabaseClient() {
         getAll() {
           return cookieStore.getAll();
         },
-        setAll(cookiesToSet) {
+
+        setAll(
+          cookiesToSet: {
+            name: string;
+            value: string;
+            options?: {
+              domain?: string;
+              encode?: (value: string) => string;
+              expires?: Date;
+              httpOnly?: boolean;
+              maxAge?: number;
+              path?: string;
+              sameSite?: "lax" | "strict" | "none";
+              secure?: boolean;
+            };
+          }[]
+        ) {
           try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options);
+            });
           } catch {
             // The `setAll` method was called from a Server Component.
             // This can be ignored if you have middleware refreshing
