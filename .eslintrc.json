@@ -1,0 +1,27 @@
+{
+  "extends": ["next/core-web-vitals"],
+  "overrides": [
+    {
+      "files": ["**/*.ts", "**/*.tsx"],
+      "excludedFiles": [
+        "actions/**/*.ts",
+        "app/api/webhooks/**/route.ts",
+        "app/api/identity/**/route.ts",
+        "lib/supabase/admin.ts"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "@/lib/supabase/admin",
+                "message": "The admin (service-role) Supabase client may only be imported from actions/*.ts or approved server-only route handlers — never from a page, component, or Client Component."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
