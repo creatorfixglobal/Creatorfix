@@ -1,0 +1,1 @@
+-- Moving to db/migrations/ folder

@@ -1,0 +1,1 @@
+// Moving to lib/supabase/ folder
