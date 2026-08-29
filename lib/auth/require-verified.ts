@@ -1,1 +1,1 @@
-// Moving to lib/auth/ folder
+// require-verified.ts

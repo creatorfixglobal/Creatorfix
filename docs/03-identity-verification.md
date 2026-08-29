@@ -1,1 +1,1 @@
-# Moving to docs/ folder
+3| # CreatorFix — Identity Verification (NID + Live Face) Architecture

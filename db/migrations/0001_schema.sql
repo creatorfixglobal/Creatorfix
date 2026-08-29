@@ -1,1 +1,1 @@
--- Moving to db/migrations/ folder
+1| -- CreatorFix — Phase 0 schema migration

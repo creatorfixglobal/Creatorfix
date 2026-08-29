@@ -1,1 +1,1 @@
-// Moving to lib/validation/ folder
+// auth.schema.ts

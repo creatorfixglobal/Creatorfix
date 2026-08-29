@@ -1,1 +1,1 @@
-// Moving to lib/supabase/ folder
+// client.ts
