@@ -2,15 +2,12 @@
 
 import { useRef, useState } from "react";
 
-type LiveFaceCaptureProps = {
-  onCaptured: (blob: Blob) => void | Promise<void>;
+type Props = {
+  onCaptured: (blob: Blob) => void;
   disabled?: boolean;
 };
 
-export function LiveFaceCapture({
-  onCaptured,
-  disabled = false,
-}: LiveFaceCaptureProps) {
+export function LiveFaceCapture({ onCaptured, disabled = false }: Props) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
@@ -54,8 +51,10 @@ export function LiveFaceCapture({
   }
 
   function stopCamera() {
-    streamRef.current?.getTracks().forEach((track) => track.stop());
-    streamRef.current = null;
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
 
     if (videoRef.current) {
       videoRef.current.srcObject = null;
@@ -65,91 +64,88 @@ export function LiveFaceCapture({
     setCapturing(false);
   }
 
-  async function captureFace() {
-    if (!videoRef.current) {
-      setError("Camera is not ready.");
+  function capturePhoto() {
+    const video = videoRef.current;
+
+    if (!video || video.readyState < 2) {
+      setError("Camera is not ready yet. Please try again.");
       return;
     }
 
     setError(null);
     setCapturing(true);
 
-    try {
-      const video = videoRef.current;
+    const canvas = document.createElement("canvas");
 
-      if (video.videoWidth === 0 || video.videoHeight === 0) {
-        setError("Camera image is not ready yet. Please try again.");
-        return;
-      }
+    const size = Math.min(video.videoWidth, video.videoHeight);
 
-      const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
 
-      const maxSize = 720;
-      const scale = Math.min(
-        1,
-        maxSize / Math.max(video.videoWidth, video.videoHeight)
-      );
+    const context = canvas.getContext("2d");
 
-      canvas.width = Math.round(video.videoWidth * scale);
-      canvas.height = Math.round(video.videoHeight * scale);
-
-      const context = canvas.getContext("2d");
-
-      if (!context) {
-        setError("Unable to capture camera image.");
-        return;
-      }
-
-      context.drawImage(
-        video,
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
-
-      const blob = await new Promise<Blob | null>((resolve) => {
-        canvas.toBlob(resolve, "image/jpeg", 0.9);
-      });
-
-      if (!blob) {
-        setError("Failed to create face capture.");
-        return;
-      }
-
-      await onCaptured(blob);
-
-      setCaptured(true);
-      stopCamera();
-    } catch (err) {
-      console.error("Face capture error:", err);
-      setError("Face capture failed. Please try again.");
-    } finally {
+    if (!context) {
+      setError("Unable to capture image.");
       setCapturing(false);
+      return;
     }
+
+    const sourceX = (video.videoWidth - size) / 2;
+    const sourceY = (video.videoHeight - size) / 2;
+
+    context.drawImage(
+      video,
+      sourceX,
+      sourceY,
+      size,
+      size,
+      0,
+      0,
+      size,
+      size
+    );
+
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          setError("Unable to create captured image.");
+          setCapturing(false);
+          return;
+        }
+
+        setCaptured(true);
+        setCapturing(false);
+
+        onCaptured(blob);
+
+        stopCamera();
+      },
+      "image/jpeg",
+      0.9
+    );
+  }
+
+  function retake() {
+    setCaptured(false);
+    setError(null);
+    startCamera();
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div>
-        <p className="text-sm font-medium text-ink-950">
+        <h3 className="text-sm font-medium text-ink-950">
           Live face capture
-        </p>
+        </h3>
 
-        <p className="mt-1 text-xs text-ink-700">
-          Use your front camera and capture a clear image of your face.
+        <p className="mt-1 text-xs text-ink-700/70">
+          Take a live photo using your front camera.
         </p>
       </div>
 
-      {cameraOpen && (
-        <div className="overflow-hidden rounded-xl border border-ink-200 bg-black">
-          <video
-            ref={videoRef}
-            autoPlay
-            muted
-            playsInline
-            className="aspect-square w-full object-cover"
-          />
+      {error && (
+        <div className="rounded-lg border border-alert-500/30 bg-alert-500/5 p-3">
+          <p className="text-sm text-alert-500">{error}</p>
         </div>
       )}
 
@@ -165,21 +161,31 @@ export function LiveFaceCapture({
       )}
 
       {cameraOpen && (
-        <div className="flex gap-3">
+        <div className="space-y-4">
+          <div className="overflow-hidden rounded-xl bg-black">
+            <video
+              ref={videoRef}
+              autoPlay
+              muted
+              playsInline
+              className="aspect-square h-auto w-full object-cover"
+            />
+          </div>
+
           <button
             type="button"
-            onClick={captureFace}
-            disabled={disabled || capturing}
-            className="cf-button-primary flex-1"
+            onClick={capturePhoto}
+            disabled={capturing || disabled}
+            className="cf-button-primary w-full"
           >
-            {capturing ? "Capturing..." : "Capture face"}
+            {capturing ? "Capturing..." : "Capture live photo"}
           </button>
 
           <button
             type="button"
             onClick={stopCamera}
             disabled={capturing}
-            className="cf-button-secondary flex-1"
+            className="w-full rounded-lg border border-ink-200 px-4 py-2 text-sm font-medium text-ink-700"
           >
             Cancel
           </button>
@@ -187,31 +193,23 @@ export function LiveFaceCapture({
       )}
 
       {captured && !cameraOpen && (
-        <div className="rounded-lg border border-green-500/30 bg-green-500/5 p-3">
-          <p className="text-sm font-medium text-green-600">
-            Live face captured successfully.
-          </p>
+        <div className="space-y-3">
+          <div className="rounded-lg border border-green-500/30 bg-green-500/5 p-4">
+            <p className="text-sm font-medium text-green-700">
+              Live face captured successfully.
+            </p>
+          </div>
 
           <button
             type="button"
-            onClick={() => {
-              setCaptured(false);
-              setError(null);
-              void startCamera();
-            }}
+            onClick={retake}
             disabled={disabled}
-            className="mt-2 text-xs font-medium underline"
+            className="w-full rounded-lg border border-ink-200 px-4 py-2 text-sm font-medium text-ink-700"
           >
-            Capture again
+            Retake photo
           </button>
         </div>
       )}
-
-      {error && (
-        <p className="text-sm text-alert-500">
-          {error}
-        </p>
-      )}
     </div>
   );
-        }
+}
