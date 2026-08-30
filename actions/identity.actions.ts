@@ -22,9 +22,6 @@ type SubmitVerificationResult =
       error: string;
     };
 
-/**
- * Get the current user's own identity verification status.
- */
 export async function getOwnVerificationStatusAction(): Promise<{
   status: VerificationStatus;
   rejectionReason: string | null;
@@ -39,12 +36,6 @@ export async function getOwnVerificationStatusAction(): Promise<{
   };
 }
 
-/**
- * Submit the current user's identity verification documents.
- *
- * The user ID is NEVER accepted from the client.
- * It is always derived from the authenticated server session.
- */
 export async function submitVerificationAction(
   input: SubmitVerificationInput
 ): Promise<SubmitVerificationResult> {
@@ -75,8 +66,6 @@ export async function submitVerificationAction(
       };
     }
 
-    // Basic path validation.
-    // Prevent arbitrary external URLs from being stored as verification files.
     const isSafeStoragePath = (value: string) => {
       return (
         value.length <= 500 &&
@@ -99,12 +88,6 @@ export async function submitVerificationAction(
 
     const supabase = createServerSupabaseClient();
 
-    /*
-     * Prevent duplicate active submissions.
-     *
-     * A user should not create another pending/in-review verification
-     * while an existing submission is still being reviewed.
-     */
     const { data: existingVerification, error: existingError } =
       await supabase
         .from("identity_verifications")
@@ -134,9 +117,6 @@ export async function submitVerificationAction(
       };
     }
 
-    /*
-     * Count previous attempts so the database keeps a useful audit trail.
-     */
     const { count: attemptCount, error: countError } = await supabase
       .from("identity_verifications")
       .select("id", { count: "exact", head: true })
@@ -156,13 +136,6 @@ export async function submitVerificationAction(
 
     const nextAttempt = (attemptCount ?? 0) + 1;
 
-    /*
-     * Create a new verification submission.
-     *
-     * IMPORTANT:
-     * The authenticated user's profile ID comes from requireRole().
-     * It is never supplied by the client.
-     */
     const { error: insertError } = await supabase
       .from("identity_verifications")
       .insert({
@@ -198,4 +171,4 @@ export async function submitVerificationAction(
       error: "Something went wrong while submitting verification.",
     };
   }
-      }
+}
