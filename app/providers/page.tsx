@@ -1,0 +1,1 @@
+import Link from "next/link"; export default function Providers(){return <main className="wrap" style={{paddingTop:50}}><Link href="/">← Home</Link><h1>Verified Providers</h1><div className="card"><strong>Provider directory</strong><p className="muted">Only approved provider profiles should be shown publicly.</p></div></main>}
