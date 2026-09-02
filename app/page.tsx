@@ -9,16 +9,15 @@ export default function HomePage() {
   return (
     <main>
       <header style={{maxWidth:1180,margin:"0 auto",padding:"22px 24px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-        <strong style={{fontSize:26}}>Creator<span style={{color:"#38bdf8"}}>Fix</span></strong>
-        <nav style={{display:"flex",gap:20,color:"#cbd5e1"}}><span>Problems</span><span>Providers</span><span>How it works</span><span>Login</span></nav>
+        <strong style={{fontSize:26}}>Creator<span style={{color:"#38bdf8"}}>Fix</span></strong><nav style={{display:"flex",gap:20,color:"#cbd5e1"}}><a href="/problems" style={{color:"inherit"}}>Problems</a><a href="/providers" style={{color:"inherit"}}>Providers</a><a href="/verify" style={{color:"inherit"}}>Verify</a><a href="/login" style={{color:"#7dd3fc"}}>Login</a></nav>
       </header>
       <section style={{maxWidth:1180,margin:"0 auto",padding:"80px 24px 60px",textAlign:"center"}}>
         <div style={{display:"inline-block",padding:"8px 14px",border:"1px solid #1e3a5f",borderRadius:999,color:"#7dd3fc",background:"#0c1728"}}>Built for Bangladeshi Content Creators</div>
         <h1 style={{fontSize:"clamp(42px,7vw,76px)",lineHeight:1.05,maxWidth:900,margin:"24px auto"}}>Fix your creator problems.<br/><span style={{color:"#38bdf8"}}>Grow without limits.</span></h1>
         <p style={{fontSize:19,color:"#94a3b8",maxWidth:720,margin:"0 auto 30px"}}>CreatorFix connects creators with verified professionals for Facebook, YouTube, TikTok and other platform-related services.</p>
         <div style={{display:"flex",justifyContent:"center",gap:12,flexWrap:"wrap"}}>
-          <button style={{padding:"14px 22px",border:0,borderRadius:10,background:"#38bdf8",fontWeight:700,cursor:"pointer"}}>Find a Solution</button>
-          <button style={{padding:"14px 22px",border:"1px solid #334155",borderRadius:10,background:"transparent",color:"#fff",fontWeight:700}}>Become a Provider</button>
+          <a href="/problems" style={{padding:"14px 22px",borderRadius:10,background:"#38bdf8",fontWeight:700,cursor:"pointer",color:"#07111c",textDecoration:"none"}}>Find a Solution</a>
+          <a href="/register" style={{padding:"14px 22px",border:"1px solid #334155",borderRadius:10,color:"#fff",fontWeight:700,textDecoration:"none"}}>Become a Provider</a>
         </div>
       </section>
       <section style={{maxWidth:1180,margin:"0 auto",padding:"30px 24px 70px"}}>
