@@ -49,3 +49,4 @@ export async function requireVerified(
   if (verification.status !== "verified") {
     redirect("/verify");
   }
+}
