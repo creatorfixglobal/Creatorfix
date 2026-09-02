@@ -1,13 +1,9 @@
 import { createBrowserClient } from "@supabase/ssr";
-
-/**
- * Browser-safe Supabase client for Client Components.
- * Use this in any component marked with 'use client'.
- * This client uses the anon/public role and respects RLS.
- */
-export function createSupabaseClient() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
-  );
+let client:any;
+export function createSupabaseClient(){
+ const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
+ const key=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+ if(!url||!key) throw new Error("Supabase is not configured. Please contact the site administrator.");
+ if(!client) client=createBrowserClient(url,key);
+ return client;
 }
