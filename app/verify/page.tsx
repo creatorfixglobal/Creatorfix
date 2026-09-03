@@ -10,9 +10,17 @@ async function upload(slot: Slot, file: File) {
   form.append("slot", slot);
   form.append("file", file);
   const response = await fetch("/api/identity/upload", { method: "POST", body: form });
-  const json = await response.json();
-  if (!response.ok || !json.ok) throw new Error(json.error || "Upload failed");
-  return json.path as string;
+  const contentType = response.headers.get("content-type") || "";
+  const payload = contentType.includes("application/json") ? await response.json() : null;
+
+  if (!response.ok || !payload?.ok) {
+    if (payload?.code === "AUTH_REQUIRED") {
+      throw new Error("Your login session has expired. Please log in again, then return to identity verification.");
+    }
+    throw new Error(payload?.error || "The upload service returned an unexpected response.");
+  }
+
+  return payload.path as string;
 }
 
 export default function VerifyPage() {
