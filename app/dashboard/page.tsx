@@ -1,51 +1,25 @@
 import Link from "next/link";
 import { requireRole } from "@/lib/auth/require-role";
-import { getVerificationStatus } from "@/lib/auth/require-verified";
-
-export default async function Dashboard() {
-  const profile = await requireRole(["customer","provider","admin"]);
-  const verification = await getVerificationStatus(profile.id);
-
-  return (
-    <main className="wrap" style={{paddingTop:52,paddingBottom:80}}>
-      <section style={{padding:"30px 0 12px"}}>
-        <span style={{color:"#7eaaff",fontWeight:800,letterSpacing:1}}>CREATORFIX ACCOUNT</span>
-        <h1 style={{fontSize:"clamp(38px,6vw,70px)",margin:"10px 0"}}>Welcome back, {profile.displayName}</h1>
-        <p className="muted">Manage your identity, provider journey and marketplace activity from one secure place.</p>
-      </section>
-
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(250px,1fr))",gap:18,marginTop:28}}>
-        <div className="card">
-          <span className="muted">IDENTITY STATUS</span>
-          <h2 style={{textTransform:"capitalize"}}>{verification.status}</h2>
-          <p className="muted">{verification.status === "verified" ? "Your identity has been verified." : "Complete NID and live face verification to unlock protected features."}</p>
-          {verification.status !== "verified" && <Link className="btn" href="/verify">Verify Identity</Link>}
-        </div>
-
-        {profile.role !== "provider" && profile.role !== "admin" && (
-          <div className="card">
-            <span className="muted">PROVIDER PROGRAM</span>
-            <h2>Become a Provider</h2>
-            <p className="muted">Verified specialists can apply after identity approval and the required BDT 1,000 security deposit.</p>
-            <Link className="btn" href="/provider/register">Start Provider Journey</Link>
-          </div>
-        )}
-
-        <div className="card">
-          <span className="muted">MARKETPLACE</span>
-          <h2>Find Solutions</h2>
-          <p className="muted">Browse creator problems and connect with the right verified specialist.</p>
-          <Link className="btn" href="/problems">Browse Problems</Link>
-        </div>
-
-        <div className="card">
-          <span className="muted">ACCOUNT SECURITY</span>
-          <h2>Protected by verification</h2>
-          <p className="muted">Sensitive identity evidence stays private and provider privileges are controlled separately from public user access.</p>
-        </div>
-      </div>
-
-      <p className="muted" style={{marginTop:30,fontSize:14}}>Administrative controls are intentionally not shown inside the user dashboard. Admin access is available only through the protected admin route.</p>
-    </main>
-  );
+import { createServerSupabaseClient } from "@/lib/supabase/server";
+const money=(v:number|undefined|null)=>new Intl.NumberFormat("en-BD",{style:"currency",currency:"BDT",maximumFractionDigits:2}).format((v||0)/100);
+export default async function DashboardPage(){
+ const me=await requireRole(["customer","provider","admin"]); const supabase=createServerSupabaseClient();
+ const [{data:profile},{data:wallet},{data:identity},{data:securityDeposit},{data:providerProfile},{count:videoCount},{data:notifications}]=await Promise.all([
+  supabase.from("profiles").select("username,display_name,bio,role,status").eq("id",me.id).single(),
+  supabase.from("wallets").select("balance,reserved_balance").eq("user_id",me.id).maybeSingle(),
+  supabase.from("identity_verifications").select("status").eq("user_id",me.id).order("created_at",{ascending:false}).limit(1).maybeSingle(),
+  supabase.from("provider_security_deposits").select("amount,status").eq("user_id",me.id).maybeSingle(),
+  supabase.from("provider_profiles").select("verification_status,status").eq("user_id",me.id).maybeSingle(),
+  supabase.from("short_videos").select("*",{count:"exact",head:true}).eq("user_id",me.id),
+  supabase.from("notifications").select("id,title,body,created_at").eq("user_id",me.id).order("created_at",{ascending:false}).limit(6)
+ ]);
+ const username=profile?.username||"creator";
+ return <main className="dash"><style>{`.dash{min-height:100vh;padding:32px 18px 80px;background:radial-gradient(circle at 90% 0,#193d74,transparent 34%),#070b17}.shell{max-width:1180px;margin:auto}.top{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap}.hero{margin-top:22px;padding:28px;border:1px solid #2a4566;border-radius:28px;background:linear-gradient(145deg,#111e33,#0b1220)}.name{font-size:clamp(34px,6vw,68px);margin:8px 0}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:16px}.tile,.panel{padding:22px;border:1px solid #243a57;border-radius:20px;background:#0d1728}.tile strong{display:block;font-size:28px;margin-top:10px}.cols{display:grid;grid-template-columns:1.1fr .9fr;gap:16px;margin-top:16px}.row{padding:14px 0;border-bottom:1px solid #21334d}.row:last-child{border:0}.muted{color:#9eafc6;line-height:1.65}.actions{display:flex;gap:10px;flex-wrap:wrap}@media(max-width:850px){.grid{grid-template-columns:repeat(2,1fr)}.cols{grid-template-columns:1fr}}@media(max-width:480px){.grid{grid-template-columns:1fr}}`}</style><div className="shell">
+ <div className="top"><Link href="/">← CreatorFix</Link><div className="actions"><Link className="btn" href={"/u/"+encodeURIComponent(username)}>Public Profile</Link><Link className="btn" href="/videos/upload">Upload Short</Link></div></div>
+ <section className="hero"><span className="muted">ACCOUNT CENTER</span><h1 className="name">{profile?.display_name||me.displayName}</h1><p className="muted">@{username} · {me.role.toUpperCase()} · {profile?.status||me.status}</p><p className="muted">{profile?.bio||"Manage your CreatorFix activity, verification, wallet and creator media from one secure place."}</p></section>
+ <section className="grid"><div className="tile"><span className="muted">AVAILABLE BALANCE</span><strong>{money(wallet?.balance)}</strong></div><div className="tile"><span className="muted">RESERVED / HELD</span><strong>{money(wallet?.reserved_balance)}</strong></div><div className="tile"><span className="muted">SECURITY DEPOSIT</span><strong>{securityDeposit?money(securityDeposit.amount):"BDT 0.00"}</strong><span className="muted">{securityDeposit?.status||"No provider hold"}</span></div><div className="tile"><span className="muted">SHORT VIDEOS</span><strong>{videoCount||0}</strong></div></section>
+ <section className="cols"><div className="panel"><h2>Verification & Provider Status</h2><div className="row"><b>Identity</b><p className="muted">{identity?.status||"Not submitted"}</p></div><div className="row"><b>Provider</b><p className="muted">{providerProfile?.status||"Customer account"} {providerProfile?.verification_status?"· "+providerProfile.verification_status:""}</p></div><div className="row"><b>BDT 1,000 security rule</b><p className="muted">{securityDeposit?"Security hold status: "+securityDeposit.status+". Releasing the hold can remove provider working eligibility under marketplace rules.":"Required before provider activation."}</p></div><div className="actions"><Link className="btn" href="/provider/register">Provider Center</Link><Link className="btn" href="/verify">Verify Identity</Link></div></div>
+ <div className="panel"><h2>Notifications</h2>{!notifications?.length?<p className="muted">No notifications yet.</p>:notifications.map(n=><div className="row" key={n.id}><b>{n.title}</b><p className="muted">{n.body}</p></div>)}</div></section>
+ {me.role==="admin"&&<section className="panel" style={{marginTop:16}}><h2>Administrator Access</h2><p className="muted">Protected administration is separated from ordinary user navigation.</p><Link className="btn" href="/admin">Open Admin Control Center</Link></section>}
+ </div></main>
 }
