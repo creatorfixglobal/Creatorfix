@@ -1,0 +1,1 @@
+import Link from "next/link"; export default function AccountSuspended(){return <main className="wrap" style={{paddingTop:80}}><h1>Account Unavailable</h1><p className="muted">This account is currently unavailable. Please contact CreatorFix support if you believe this is a mistake.</p><Link className="btn" href="/">Return Home</Link></main>;}
