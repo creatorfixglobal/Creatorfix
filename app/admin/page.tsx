@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth/require-role";
-import { IdentityReviewControls, ProviderReviewControls } from "@/components/admin-review-controls";
+import { IdentityReviewControls, ProviderReviewControls, SecurityDepositReviewControls } from "@/components/admin-review-controls";
 
 const nav = [
   ["overview","Overview"],["users","Users"],["providers","Providers"],["identity","Identity"],
@@ -16,7 +16,7 @@ export default async function Admin() {
   const [
     { data: verifications }, { data: applications }, { data: profiles },
     { count: platformCount }, { count: problemCount }, { count: serviceCount },
-    { count: orderCount }, { count: depositCount }, { count: disputeCount },
+    { count: orderCount }, { count: depositCount }, { data: securityDeposits }, { count: disputeCount },
     { count: feeCount }, { count: auditCount }
   ] = await Promise.all([
     supabase.from("identity_verifications").select("id,user_id,status,submitted_at,created_at").in("status", ["pending","in_review"]).order("created_at", {ascending:false}).limit(30),
@@ -27,6 +27,7 @@ export default async function Admin() {
     supabase.from("services").select("*",{count:"exact",head:true}),
     supabase.from("orders").select("*",{count:"exact",head:true}),
     supabase.from("deposits").select("*",{count:"exact",head:true}),
+    supabase.from("provider_security_deposits").select("id,user_id,amount,payment_method,payment_reference,status,created_at").in("status",["pending","release_requested"]).order("created_at",{ascending:false}).limit(30),
     supabase.from("disputes").select("*",{count:"exact",head:true}),
     supabase.from("platform_fee_rules").select("*",{count:"exact",head:true}),
     supabase.from("audit_logs").select("*",{count:"exact",head:true}),
@@ -95,7 +96,7 @@ export default async function Admin() {
           <section id="problems" className="admin-section"><h2>Problems</h2><div className="card"><strong>{problemCount || 0} problem records</strong><p className="muted">Published problem content is available to the public marketplace.</p></div></section>
           <section id="services" className="admin-section"><h2>Services</h2><div className="card"><strong>{serviceCount || 0} services</strong><p className="muted">Provider services remain subject to provider verification and approval rules.</p></div></section>
           <section id="orders" className="admin-section"><h2>Orders</h2><div className="card"><strong>{orderCount || 0} orders</strong><p className="muted">Order workflow and escrow data are tracked in the protected backend.</p></div></section>
-          <section id="payments" className="admin-section"><h2>Payments & Deposits</h2><div className="card"><strong>{depositCount || 0} deposit records</strong><p className="muted">Deposit verification and provider security deposits will appear here as backend payment workflows are completed.</p></div></section>
+          <section id="payments" className="admin-section"><h2>Payments & Security Deposits</h2><div className="card"><strong>{depositCount || 0} general deposit records</strong><p className="muted">Provider BDT 1,000 security holds require explicit admin approval before provider activation.</p></div><div className="queue" style={{marginTop:14}}>{!securityDeposits?.length && <div className="queue-item muted">No provider security deposits are awaiting action.</div>}{securityDeposits?.map((item)=>{const person=profileMap.get(item.user_id);return <div className="queue-item" key={item.id}><strong>{person?.display_name || "Unknown user"}</strong><p className="muted">{item.payment_method} · {item.payment_reference} · BDT {item.amount/100} · {item.status}</p><SecurityDepositReviewControls id={item.id} status={item.status as "pending"|"release_requested"}/></div>})}</div></section>
           <section id="disputes" className="admin-section"><h2>Disputes</h2><div className="card"><strong>{disputeCount || 0} disputes</strong></div></section>
           <section id="fees" className="admin-section"><h2>Fee Rules</h2><div className="card"><strong>{feeCount || 0} fee rules</strong></div></section>
           <section id="audit" className="admin-section"><h2>Audit</h2><div className="card"><strong>{auditCount || 0} audit events</strong><p className="muted">Sensitive administrative actions should remain traceable through audit records.</p></div></section>
