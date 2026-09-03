@@ -7,7 +7,7 @@ export default async function ProblemDetailPage({ params }: { params: { slug: st
 
   const { data: problem, error } = await supabase
     .from("problems")
-    .select("id,title,slug,short_description,description,status,platforms(name,slug)")
+    .select("id,title,slug,short_description,full_description,status,platforms(name,slug)")
     .eq("slug", params.slug)
     .eq("status", "published")
     .maybeSingle();
@@ -30,7 +30,7 @@ export default async function ProblemDetailPage({ params }: { params: { slug: st
           <span className="eyebrow">{platform?.name || "CREATORFIX"} • VERIFIED WORKFLOW</span>
           <h1 className="problem-title">{problem.title}</h1>
           <p className="problem-copy">{problem.short_description}</p>
-          {problem.description && <p className="problem-copy">{problem.description}</p>}
+          {problem.full_description && <p className="problem-copy">{problem.full_description}</p>}
           <div className="actions">
             <Link className="primary" href={"/register?problem=" + encodeURIComponent(problem.slug)}>Start Your Case →</Link>
             <Link className="secondary" href="/problems">Browse Other Solutions</Link>
