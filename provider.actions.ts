@@ -76,3 +76,21 @@ export async function rejectProviderApplicationAction(applicationId:string,reaso
   const {error}=await admin.rpc("reject_provider_application",{p_application_id:applicationId,p_admin_id:admin_.id,p_reason:reason});
   if(error)return {ok:false,error:error.message}; return {ok:true,data:undefined};
 }
+
+export async function approveProviderSecurityDepositAction(depositId:string):Promise<ActionResult>{
+  const admin_=await requireRole(["admin"]); const admin=createAdminSupabaseClient();
+  const {error}=await admin.rpc("approve_provider_security_deposit",{p_deposit_id:depositId,p_admin_id:admin_.id});
+  if(error)return {ok:false,error:error.message}; return {ok:true,data:undefined};
+}
+
+export async function rejectProviderSecurityDepositAction(depositId:string,reason:string):Promise<ActionResult>{
+  const admin_=await requireRole(["admin"]); const admin=createAdminSupabaseClient();
+  const {error}=await admin.rpc("reject_provider_security_deposit",{p_deposit_id:depositId,p_admin_id:admin_.id,p_reason:reason});
+  if(error)return {ok:false,error:error.message}; return {ok:true,data:undefined};
+}
+
+export async function releaseProviderSecurityDepositAction(depositId:string):Promise<ActionResult>{
+  const admin_=await requireRole(["admin"]); const admin=createAdminSupabaseClient();
+  const {error}=await admin.rpc("release_provider_security_deposit",{p_deposit_id:depositId,p_admin_id:admin_.id});
+  if(error)return {ok:false,error:error.message}; return {ok:true,data:undefined};
+}
