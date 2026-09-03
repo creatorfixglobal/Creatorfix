@@ -1,0 +1,1 @@
+import Link from "next/link"; export default function Unauthorized(){return <main className="wrap" style={{paddingTop:80}}><h1>Access Restricted</h1><p className="muted">Your account does not have permission to access this page.</p><Link className="btn" href="/dashboard">Go to Dashboard</Link></main>;}
