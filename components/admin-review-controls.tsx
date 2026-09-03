@@ -11,7 +11,7 @@ export function IdentityReviewControls({ id }: { id: string }) {
   async function approve() {
     setBusy(true);
     const result = await approveIdentityVerificationAction(id);
-    setMessage(result.ok ? "Approved. Refresh to update the queue." : result.error);
+    setMessage(result.ok ? "Approved. Refresh to update the queue." : (result.error || "Request failed."));
     setBusy(false);
   }
 
@@ -20,7 +20,7 @@ export function IdentityReviewControls({ id }: { id: string }) {
     if (!reason) return;
     setBusy(true);
     const result = await rejectIdentityVerificationAction(id, reason);
-    setMessage(result.ok ? "Rejected. Refresh to update the queue." : result.error);
+    setMessage(result.ok ? "Rejected. Refresh to update the queue." : (result.error || "Request failed."));
     setBusy(false);
   }
 
@@ -38,7 +38,7 @@ export function ProviderReviewControls({ id }: { id: string }) {
   async function approve() {
     setBusy(true);
     const result = await approveProviderApplicationAction(id);
-    setMessage(result.ok ? "Provider approved. Refresh to update the queue." : result.error);
+    setMessage(result.ok ? "Provider approved. Refresh to update the queue." : (result.error || "Request failed."));
     setBusy(false);
   }
 
@@ -47,7 +47,7 @@ export function ProviderReviewControls({ id }: { id: string }) {
     if (!reason) return;
     setBusy(true);
     const result = await rejectProviderApplicationAction(id, reason);
-    setMessage(result.ok ? "Rejected. Refresh to update the queue." : result.error);
+    setMessage(result.ok ? "Rejected. Refresh to update the queue." : (result.error || "Request failed."));
     setBusy(false);
   }
 
