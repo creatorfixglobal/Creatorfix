@@ -1,3 +1,38 @@
-import { NextRequest, NextResponse } from "next/server";import crypto from "crypto";import { createServerSupabaseClient } from "@/lib/supabase/server";
-const purposes={video:{resourceType:"video",base:"creatorfix/short-videos"},avatar:{resourceType:"image",base:"creatorfix/avatars"},cover:{resourceType:"image",base:"creatorfix/covers"}} as const;
-export async function POST(req:NextRequest){try{const supabase=createServerSupabaseClient();const {data:{user}}=await supabase.auth.getUser();if(!user)return NextResponse.json({error:"AUTH_REQUIRED"},{status:401});const cloudName=process.env.CLOUDINARY_CLOUD_NAME,apiKey=process.env.CLOUDINARY_API_KEY,secret=process.env.CLOUDINARY_API_SECRET;if(!cloudName||!apiKey||!secret)return NextResponse.json({error:"Cloudinary is not configured yet."},{status:503});const {data:profile}=await supabase.from("profiles").select("id").eq("auth_user_id",user.id).single();if(!profile)return NextResponse.json({error:"PROFILE_NOT_FOUND"},{status:403});const body=await req.json().catch(()=>({}));const purpose=body.purpose as keyof typeof purposes;if(!purpose||!purposes[purpose])return NextResponse.json({error:"Unsupported media purpose."},{status:400});const config=purposes[purpose],timestamp=Math.floor(Date.now()/1000),folder=`${config.base}/${profile.id}`,signature=crypto.createHash("sha1").update(`folder=${folder}&timestamp=${timestamp}`+secret).digest("hex");return NextResponse.json({cloudName,apiKey,timestamp,folder,signature,resourceType:config.resourceType});}catch{return NextResponse.json({error:"SIGNATURE_FAILED"},{status:500})}}
+import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
+
+const purposes = {
+  video: { resourceType: "video", base: "creatorfix/short-videos" },
+  avatar: { resourceType: "image", base: "creatorfix/avatars" },
+  cover: { resourceType: "image", base: "creatorfix/covers" }
+} as const;
+
+export async function POST(req: NextRequest) {
+  try {
+    const supabase = createServerSupabaseClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: "AUTH_REQUIRED" }, { status: 401 });
+
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+    const apiKey = process.env.CLOUDINARY_API_KEY;
+    const secret = process.env.CLOUDINARY_API_SECRET;
+    if (!cloudName || !apiKey || !secret) return NextResponse.json({ error: "Cloudinary is not configured yet." }, { status: 503 });
+
+    const { data: profile } = await supabase.from("profiles").select("id").eq("auth_user_id", user.id).single();
+    if (!profile) return NextResponse.json({ error: "PROFILE_NOT_FOUND" }, { status: 403 });
+
+    const body = await req.json().catch(() => ({}));
+    const purpose = (body.purpose || (body.resourceType === "video" ? "video" : body.resourceType)) as keyof typeof purposes;
+    if (!purpose || !purposes[purpose]) return NextResponse.json({ error: "Unsupported media purpose." }, { status: 400 });
+
+    const config = purposes[purpose];
+    const timestamp = Math.floor(Date.now() / 1000);
+    const folder = `${config.base}/${profile.id}`;
+    const signature = crypto.createHash("sha1").update(`folder=${folder}&timestamp=${timestamp}${secret}`).digest("hex");
+
+    return NextResponse.json({ cloudName, apiKey, timestamp, folder, signature, resourceType: config.resourceType });
+  } catch {
+    return NextResponse.json({ error: "SIGNATURE_FAILED" }, { status: 500 });
+  }
+}
