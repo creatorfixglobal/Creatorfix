@@ -2,7 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 
-const MAX_BYTES = 200 * 1024 * 1024;
+const MAX_BYTES = 100 * 1024 * 1024;
 
 export default function UploadShortVideo() {
   const [file, setFile] = useState<File | null>(null);
@@ -13,7 +13,7 @@ export default function UploadShortVideo() {
   async function upload() {
     if (!file) return setMessage("Choose a video first.");
     if (!file.type.startsWith("video/")) return setMessage("Please choose a valid video file.");
-    if (file.size > MAX_BYTES) return setMessage("Video is too large. Maximum upload size is 200 MB.");
+    if (file.size > MAX_BYTES) return setMessage("Video is too large. Maximum upload size is 100 MB.");
 
     setBusy(true); setMessage("");
     try {
@@ -62,7 +62,7 @@ export default function UploadShortVideo() {
       <span className="muted">CREATORFIX SHORTS</span>
       <h1>Upload a short video</h1>
       <p className="muted">Your public creator video is uploaded directly to Cloudinary through a short-lived server signature. Identity documents never use this media pipeline.</p>
-      <label className="field"><b>Video</b><input type="file" accept="video/*" onChange={e=>setFile(e.target.files?.[0]||null)}/><span className="note">MP4, MOV and other browser-supported video formats · max 200 MB</span></label>
+      <label className="field"><b>Video</b><input type="file" accept="video/*" onChange={e=>setFile(e.target.files?.[0]||null)}/><span className="note">MP4, MOV and other browser-supported video formats · max 100 MB</span></label>
       <label className="field"><b>Caption</b><textarea rows={4} maxLength={500} value={caption} onChange={e=>setCaption(e.target.value)} placeholder="Tell the CreatorFix community about this short..."/></label>
       <button className="btn" disabled={busy} onClick={upload}>{busy ? "Uploading and publishing..." : "Publish Short Video"}</button>
       {message && <p className="muted" style={{color:"#ffb8c5"}}>{message}</p>}
