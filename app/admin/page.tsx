@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createAdminSupabaseClient } from "@/lib/supabase/admin";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth/require-role";
 import { IdentityReviewControls, ProviderReviewControls, SecurityDepositReviewControls } from "@/components/admin-review-controls";
 import { AdminContentControls } from "@/components/admin-content-controls";
@@ -12,7 +12,7 @@ const nav = [
 
 export default async function Admin() {
   await requireRole(["admin"]);
-  const supabase = createAdminSupabaseClient();
+  const supabase = createServerSupabaseClient();
 
   const [
     { data: verifications }, { data: applications }, { data: profiles },
