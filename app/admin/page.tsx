@@ -24,7 +24,7 @@ export default async function Admin() {
   ] = await Promise.all([
     supabase.from("identity_verifications").select("id,user_id,status,submitted_at,created_at").in("status", ["pending","in_review"]).order("created_at", {ascending:false}).limit(30),
     supabase.from("provider_applications").select("id,user_id,bio,skills,status,created_at").eq("status","submitted").order("created_at", {ascending:false}).limit(30),
-    supabase.from("profiles").select("id,display_name,email,role,status,created_at").order("created_at",{ascending:false}).limit(30),
+    supabase.from("profiles").select("id,display_name,email,role,status,created_at").order("created_at",{ascending:false}).limit(1000),
     supabase.from("platforms").select("*",{count:"exact",head:true}),
     supabase.from("problems").select("*",{count:"exact",head:true}),
     supabase.from("services").select("*",{count:"exact",head:true}),
