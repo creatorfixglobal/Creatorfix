@@ -83,7 +83,7 @@ export default function VerifyPage() {
         upload("live-face", face),
       ]);
       const result = await submitVerificationAction({ nidFrontPath, nidBackPath, liveFacePath });
-      setMessage(result.ok ? "Verification submitted successfully. An admin will review your identity." : result.error);
+      setMessage(result.ok ? "Verification submitted successfully. An admin will review your identity." : (result.error || "Verification submission failed."));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Verification upload failed.");
     } finally {
