@@ -3,6 +3,8 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth/require-role";
 import { IdentityReviewControls, ProviderReviewControls, SecurityDepositReviewControls } from "@/components/admin-review-controls";
 import { AdminContentControls } from "@/components/admin-content-controls";
+import AdminUserControls from "@/components/admin-user-controls";
+import { DepositControls, WithdrawalControls } from "@/components/admin-finance-controls";
 
 const nav = [
   ["overview","Overview"],["users","Users"],["providers","Providers"],["identity","Identity"],
@@ -18,11 +20,11 @@ export default async function Admin() {
     { data: verifications }, { data: applications }, { data: profiles },
     { count: platformCount }, { count: problemCount }, { count: serviceCount },
     { count: orderCount }, { count: depositCount }, { data: securityDeposits }, { count: disputeCount },
-    { count: feeCount }, { count: auditCount }, { data: platformRows }, { data: problemRows }
+    { count: feeCount }, { count: auditCount }, { data: platformRows }, { data: problemRows }, { data: wallets }, { data: pendingDeposits }, { data: pendingWithdrawals }
   ] = await Promise.all([
     supabase.from("identity_verifications").select("id,user_id,status,submitted_at,created_at").in("status", ["pending","in_review"]).order("created_at", {ascending:false}).limit(30),
     supabase.from("provider_applications").select("id,user_id,bio,skills,status,created_at").eq("status","submitted").order("created_at", {ascending:false}).limit(30),
-    supabase.from("profiles").select("id,display_name,email,role,status,created_at").order("created_at",{ascending:false}).limit(30),
+    supabase.from("profiles").select("id,display_name,email,role,status,created_at").order("created_at",{ascending:false}).limit(1000),
     supabase.from("platforms").select("*",{count:"exact",head:true}),
     supabase.from("problems").select("*",{count:"exact",head:true}),
     supabase.from("services").select("*",{count:"exact",head:true}),
@@ -34,9 +36,13 @@ export default async function Admin() {
     supabase.from("audit_logs").select("*",{count:"exact",head:true}),
     supabase.from("platforms").select("id,name,slug,status,description").order("sort_order",{ascending:true}),
     supabase.from("problems").select("id,title,slug,status,short_description,platform_id").order("created_at",{ascending:false}).limit(100),
+    supabase.from("wallets").select("user_id,balance,reserved_balance"),
+    supabase.from("deposits").select("id,user_id,amount,payment_method,payment_reference,status,created_at").eq("status","pending").order("created_at",{ascending:false}).limit(50),
+    supabase.from("wallet_withdrawal_requests").select("id,user_id,amount,payout_method,payout_account,status,created_at").in("status",["requested","processing"]).order("created_at",{ascending:false}).limit(50),
   ]);
 
   const profileMap = new Map((profiles || []).map((p) => [p.id, p]));
+  const walletMap = new Map((wallets || []).map((w:any) => [w.user_id, w]));
 
   return (
     <main className="wrap" style={{paddingTop:40,paddingBottom:90}}>
@@ -93,13 +99,13 @@ export default async function Admin() {
             </div>
           </section>
 
-          <section id="users" className="admin-section"><h2>Users</h2><div className="card">{(profiles || []).map((p)=><div className="table-row" key={p.id}><span>{p.display_name || "Unnamed user"}</span><span className="muted">{p.role} · {p.status}</span></div>)}</div></section>
+          <section id="users" className="admin-section"><h2>Users & Account Control</h2><div className="card">{(profiles || []).map((p)=>{const w=walletMap.get(p.id) as any;return <div className="table-row" key={p.id} style={{display:"block"}}><div style={{display:"flex",justifyContent:"space-between",gap:12}}><span><b>{p.display_name || "Unnamed user"}</b><br/><small className="muted">{p.email}</small></span><span className="muted">{p.role} · {p.status}</span></div><AdminUserControls userId={p.id} status={p.status} balance={w?.balance||0}/></div>})}</div></section>
 
           <section id="platforms" className="admin-section"><h2>Platform & Problem Operations</h2><div className="card"><strong>{platformCount || 0} platforms · {problemCount || 0} problems</strong><p className="muted">Create, publish, draft, archive, activate and suspend marketplace content from this protected workspace.</p></div><div style={{marginTop:14}}><AdminContentControls platforms={(platformRows || []) as any} problems={(problemRows || []) as any}/></div></section>
           <section id="problems" className="admin-section"><h2>Problem Publishing</h2><p className="muted">Use the manager above to control problem lifecycle. Public listings update from database-backed records.</p></section>
           <section id="services" className="admin-section"><h2>Services</h2><div className="card"><strong>{serviceCount || 0} services</strong><p className="muted">Provider services remain subject to provider verification and approval rules.</p></div></section>
           <section id="orders" className="admin-section"><h2>Orders</h2><div className="card"><strong>{orderCount || 0} orders</strong><p className="muted">Order workflow and escrow data are tracked in the protected backend.</p></div></section>
-          <section id="payments" className="admin-section"><h2>Payments & Security Deposits</h2><div className="card"><strong>{depositCount || 0} general deposit records</strong><p className="muted">Provider BDT 1,000 security holds require explicit admin approval before provider activation.</p></div><div className="queue" style={{marginTop:14}}>{!securityDeposits?.length && <div className="queue-item muted">No provider security deposits are awaiting action.</div>}{securityDeposits?.map((item)=>{const person=profileMap.get(item.user_id);return <div className="queue-item" key={item.id}><strong>{person?.display_name || "Unknown user"}</strong><p className="muted">{item.payment_method} · {item.payment_reference} · BDT {item.amount/100} · {item.status}</p><SecurityDepositReviewControls id={item.id} status={item.status as "pending"|"release_requested"}/></div>})}</div></section>
+          <section id="payments" className="admin-section"><h2>Payments, Wallets & Security Deposits</h2><div className="queue" style={{marginBottom:18}}><h3>Pending Wallet Deposits</h3>{!pendingDeposits?.length&&<div className="queue-item muted">No wallet deposits awaiting review.</div>}{pendingDeposits?.map((d:any)=>{const person=profileMap.get(d.user_id);return <div className="queue-item" key={d.id}><strong>{person?.display_name||d.user_id}</strong><p className="muted">BDT {d.amount/100} · {d.payment_method} · Ref: {d.payment_reference}</p><DepositControls id={d.id}/></div>})}<h3 style={{marginTop:18}}>Pending Wallet Withdrawals</h3>{!pendingWithdrawals?.length&&<div className="queue-item muted">No wallet withdrawals awaiting review.</div>}{pendingWithdrawals?.map((w:any)=>{const person=profileMap.get(w.user_id);return <div className="queue-item" key={w.id}><strong>{person?.display_name||w.user_id}</strong><p className="muted">BDT {w.amount/100} · {w.payout_method} · {w.payout_account}</p><WithdrawalControls id={w.id}/></div>})}</div><div className="card"><strong>{depositCount || 0} general deposit records</strong><p className="muted">Provider BDT 1,000 security holds require explicit admin approval before provider activation.</p></div><div className="queue" style={{marginTop:14}}>{!securityDeposits?.length && <div className="queue-item muted">No provider security deposits are awaiting action.</div>}{securityDeposits?.map((item)=>{const person=profileMap.get(item.user_id);return <div className="queue-item" key={item.id}><strong>{person?.display_name || "Unknown user"}</strong><p className="muted">{item.payment_method} · {item.payment_reference} · BDT {item.amount/100} · {item.status}</p><SecurityDepositReviewControls id={item.id} status={item.status as "pending"|"release_requested"}/></div>})}</div></section>
           <section id="disputes" className="admin-section"><h2>Disputes</h2><div className="card"><strong>{disputeCount || 0} disputes</strong></div></section>
           <section id="fees" className="admin-section"><h2>Fee Rules</h2><div className="card"><strong>{feeCount || 0} fee rules</strong></div></section>
           <section id="audit" className="admin-section"><h2>Audit</h2><div className="card"><strong>{auditCount || 0} audit events</strong><p className="muted">Sensitive administrative actions should remain traceable through audit records.</p></div></section>

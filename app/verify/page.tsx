@@ -83,7 +83,7 @@ export default function VerifyPage() {
         upload("live-face", face),
       ]);
       const result = await submitVerificationAction({ nidFrontPath, nidBackPath, liveFacePath });
-      setMessage(result.ok ? "Verification submitted successfully. An admin will review your identity." : result.error);
+      setMessage(result.ok ? "Verification submitted successfully. An admin will review your identity." : (result.error || "Verification submission failed."));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Verification upload failed.");
     } finally {
@@ -97,9 +97,9 @@ export default function VerifyPage() {
         .verify-page{min-height:100vh;padding:36px 20px;background:radial-gradient(circle at 90% 0,#183a68 0,transparent 32%),#07111f;color:#f8fbff}.verify-shell{max-width:860px;margin:auto}.verify-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.verify-card{background:#0d1929;border:1px solid #29435f;border-radius:18px;padding:22px}.verify-card input{width:100%;margin-top:12px}.verify-btn{border:0;border-radius:12px;padding:14px 18px;background:linear-gradient(135deg,#4b8cff,#7b5cff);color:#fff;font-weight:800;cursor:pointer}.verify-btn:disabled{opacity:.55}.video{width:100%;border-radius:14px;background:#05080d;min-height:220px;object-fit:cover}.status{margin-top:18px;padding:14px;border-radius:12px;background:#101f33;color:#b9cdf0}@media(max-width:700px){.verify-grid{grid-template-columns:1fr}}
       `}</style>
       <div className="verify-shell">
-        <a href="/dashboard">← Dashboard</a>
+        <a href="/dashboard">← Dashboard</a> <a href="/wallet" style={{marginLeft:12}}>Wallet</a>
         <h1 style={{fontSize:"clamp(38px,7vw,64px)",marginBottom:8}}>Identity Verification</h1>
-        <p style={{color:"#9fb1c7",lineHeight:1.7,maxWidth:700}}>To protect CreatorFix users and prevent fraud, identity documents are stored privately and reviewed by an administrator. Your NID and face image are never public.</p>
+        <p style={{color:"#9fb1c7",lineHeight:1.7,maxWidth:700}}>To protect CreatorFix users and prevent fraud, identity documents are stored privately and reviewed by an administrator. Your NID and face image are never public. A BDT 100 verification fee is charged automatically from your CreatorFix wallet when you submit.</p>
         <div className="verify-grid" style={{marginTop:28}}>
           <section className="verify-card">
             <h2>NID Front</h2>

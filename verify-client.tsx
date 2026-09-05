@@ -94,7 +94,7 @@ export function VerifyClient({ displayName, status, rejectionReason }: Props) {
         liveFacePath,
       });
       if (!result.ok) {
-        setError(result.error);
+        setError(result.error || "Verification submission failed.");
         return;
       }
       router.refresh();
