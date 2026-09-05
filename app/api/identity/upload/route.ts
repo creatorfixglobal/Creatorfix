@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       .eq("auth_user_id", user.id)
       .single();
 
-    if (!profile || !["customer", "provider"].includes(profile.role)) {
+    if (!profile || !["customer", "provider", "admin"].includes(profile.role)) {
       return NextResponse.json(
         { ok: false, code: "PROFILE_INVALID", error: "Your account is not eligible to upload identity documents." },
         { status: 403 }
